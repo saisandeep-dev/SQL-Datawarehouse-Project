@@ -1,0 +1,35 @@
+--Quality check for bronze.crm_cust_table
+select cst_id ,
+count(*)
+from bronze.crm_cust_info
+group by cst_id
+HAVING Count(*) >1 or cst_id is null;
+
+-----Quality check for silver.crm_cust_table
+select cst_id ,
+count(*)
+from bronze.crm_cust_info
+group by cst_id
+HAVING Count(*) >1 or cst_id is null;
+
+SELECT Cst_firstname from silver.crm_cust_info
+where cst_firstname != trim(cst_firstname);
+
+SELECT cst_lastname from silver.crm_cust_info
+where cst_lastname != trim(cst_lastname);
+
+select distinct cst_gender
+from silver.crm_cust_info;
+
+--prd_table--
+select prd_id ,
+count(*)
+from silver.crm_prd_info
+group by prd_id
+HAVING Count(*) >1 or prd_id is null;
+
+SELECT prd_nm from silver.crm_prd_info
+where prd_nm != trim(prd_nm);
+
+SELECT prd_cost from silver.crm_prd_info
+where prd_cost is null or prd_cost<=0;

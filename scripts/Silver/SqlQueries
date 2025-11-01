@@ -1,0 +1,217 @@
+---Fix crm_cust_info
+
+CREATE TABLE silver.crm_cust_info(
+cst_id int,
+cst_key varchar(50),
+cst_firstname varchar(50),
+cst_lastname varchar(50),
+cst_marital_status varchar(50),
+cst_gender varchar(50),
+cst_create_date varchar (50));
+
+INSERT INTO silver.crm_cust_info(
+cst_id,cst_key,cst_firstname,cst_lastname,cst_marital_status,cst_gender,cst_create_date)
+
+
+select
+cst_id,
+cst_key,
+trim(cst_firstname) as cst_firstname, 
+trim(cst_lastname) as cst_latname,
+CASE
+ WHEN Upper(TRIM(cst_marital_status)) = 'S' then 'Single'
+ WHEN Upper(TRIM(cst_marital_status)) = 'M' then 'Married'
+ else 'n/a'
+ end as cst_marital_status,
+ CASE
+ WHEN Upper(TRIM(cst_gender))='M' then 'Male'
+ WHEN Upper(TRIM(cst_gender))='F' then 'Female' 
+ else 'n/a'
+ end as cst_gender,
+ cst_create_date
+from
+(
+select *,
+ROW_NUMBER() OVER(PARTITION BY Cst_id order by cst_create_date DESC) as rank_by_create_date
+from bronze.crm_cust_info
+) as t 
+WHERE rank_by_create_date=1 and cst_id is not null;
+
+SELECT * FROM silver.crm_cust_info
+
+--Fix crm_prd_info
+IF OBJECT_ID('silver.crm_prd_info','U') is NOT NULL
+DROP TABLE silver.crm_prd_info;
+
+GO
+
+CREATE TABLE silver.crm_prd_info(
+prd_id  INT,
+cat_id nvarchar(50),
+prd_key nvarchar(50),
+prd_nm nvarchar(50),
+prd_cost int,
+prd_line nvarchar(50),
+prd_start_dt date,
+prd_end_dt date,
+dwh_create_date datetime2 default GETDATE()
+);
+
+INSERT INTO silver.crm_prd_info(
+prd_id ,
+cat_id ,
+prd_key,
+prd_nm ,
+prd_cost,
+prd_line,
+prd_start_dt,
+prd_end_dt
+)
+SELECT 
+prd_id,
+prd_nm,
+REPLACE(substring(prd_key,1,5),'-','_') as Cat_id,
+substring(prd_key,7,LEN(prd_key) )as Prd_key,
+isnull(prd_cost,0) as prd_cost,
+CASE
+ WHEN UPPER(TRIM(prd_line)) ='M' then 'Mountain'
+ WHEN UPPER(TRIM(prd_line)) ='R' then 'Road'
+ WHEN UPPER(TRIM(prd_line)) ='S' then 'Other Sales'
+ WHEN UPPER(TRIM(prd_line)) ='M' then 'Touring'
+ Else 'n/a'
+END as prd_line,
+cast(prd_start_dt as DATE)as  prd_start_dt,
+cast(lead(prd_start_dt) over (partition by prd_key order by prd_start_dt)-1 as DATE) AS prd_end_dt
+FROM bronze.crm_prd_info
+
+select * from silver.crm_prd_info
+
+
+
+-----Fix crm_sales_details
+select sls_ord_num,sls_prod_key,sls_cust_id,
+case
+when sls_order_dt=0 or len(sls_order_dt) !=8 then null
+else
+cast(cast(sls_order_dt as varchar) as DATE) 
+END AS sls_order_dt,
+case
+when sls_ship_dt=0 or len(sls_ship_dt) !=8 then null
+else
+cast(cast(sls_ship_dt as varchar) as DATE) 
+END AS sls_ship_dt,
+case
+when sls_due_dt=0 or len(sls_due_dt) !=8 then null
+else
+cast(cast(sls_due_dt as varchar) as DATE) 
+END AS sls_due_dt,
+case
+when sls_sales is null or sls_sales<=0 or sls_sales!= sls_quatity* abs(sls_price)
+then sls_quatity* abs(sls_price)
+else sls_sales
+end as sls_sales,
+case 
+when sls_price is null or sls_price<=0 or sls_price != sls_sales /sls_quatity
+then sls_sales /sls_quatity
+else sls_price
+end as sls_price,
+sls_quatity
+from bronze.crm_sales_detalis
+
+---dropping and inserting values into in the silver table
+IF OBJECT_ID('silver.crm_sales_details','U')is not null
+drop table silver.crm_sales_detalis;
+
+GO
+
+CREATE TABLE silver.crm_sales_details(
+sls_ord_num nvarchar(50),
+sls_prod_key nvarchar(50),
+sls_cust_id int,
+sls_order_dt date,
+sls_ship_dt date,
+sls_due_dt date,
+sls_sales int,
+sls_quatity int,
+sls_price int,
+dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+INSERT INTO silver.crm_sales_details(
+sls_ord_num ,
+sls_prod_key ,
+sls_cust_id ,
+sls_order_dt ,
+sls_ship_dt ,
+sls_due_dt ,
+sls_sales ,
+sls_quatity ,
+sls_price
+)
+select sls_ord_num,sls_prod_key,sls_cust_id,
+case
+when sls_order_dt=0 or len(sls_order_dt) !=8 then null
+else
+cast(cast(sls_order_dt as varchar) as DATE) 
+END AS sls_order_dt,
+case
+when sls_ship_dt=0 or len(sls_ship_dt) !=8 then null
+else
+cast(cast(sls_ship_dt as varchar) as DATE) 
+END AS sls_ship_dt,
+case
+when sls_due_dt=0 or len(sls_due_dt) !=8 then null
+else
+cast(cast(sls_due_dt as varchar) as DATE) 
+END AS sls_due_dt,
+case
+when sls_sales is null or sls_sales<=0 or sls_sales!= sls_quatity* abs(sls_price)
+then sls_quatity* abs(sls_price)
+else sls_sales
+end as sls_sales,
+case 
+when sls_price is null or sls_price<=0 or sls_price != sls_sales /sls_quatity
+then sls_sales /sls_quatity
+else sls_price
+end as sls_price,
+sls_quatity
+from bronze.crm_sales_detalis
+
+select * from silver.crm_sales_details
+
+------fixing and inserting erp_cust_az12--------------
+INSERT INTO silver.erp_cust_az12(
+cid,bdate,gen)
+select 
+CASE 
+ when cid LIKE 'NAS%' THEN SUBSTRING(cid,4,len(cid))
+ else CID
+ END CID,
+case
+ when bdate >getdate() or bdate<'1925-10-17' then null
+ else bdate
+ end as bdate,
+case
+  when upper(trim(gen)) IN ('M','Male') then 'Male'
+   when upper(trim(gen)) IN ('F','Female') then 'Female'
+   else 'n/a'
+   end as gen
+ FROM bronze.erp_cust_az12;
+
+-------fixing bronze.erp_loc_a101 and inserting into silver.erp_loc_a101--------------------
+insert into silver.erp_loc_a101(
+ cid,cntry)
+ select 
+ replace (cid,'-',' ') as cid,
+ case
+ when trim(cntry)='DE' then 'Germany'
+ when trim(cntry) in ('US','USA') then 'United States'
+ when trim(cntry)=' ' or cntry is null then 'n/a'
+ else trim(cntry)
+ end as cntry
+FROM bronze.erp_loc_a101;
+
+----------inserting into silver.erp_px_cat_g1v2----------
+Insert into silver.erp_px_cat_g1v2(
+id,cat,subcat,maintenance)
+select id,cat,subcat,maintenance 
+from bronze.erp_px_cat_g1v2;
