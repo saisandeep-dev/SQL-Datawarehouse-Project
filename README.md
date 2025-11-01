@@ -1,123 +1,145 @@
-SQL Data Warehouse Project
-Project Overview
+# SQL Data Warehouse Project
 
-This project demonstrates the design and implementation of a complete Data Warehouse pipeline using a layered approach consisting of Bronze, Silver, and Gold layers.
-It combines data from CRM and ERP systems, performs data cleaning and transformation, and enables both Exploratory Data Analysis (EDA) and Advanced Data Analysis (ADA) for business insights.
+## Overview
 
-Data Architecture
-1. Bronze Layer – Raw Data Layer
+This project demonstrates the complete design and implementation of a **SQL-based Data Warehouse** using a multi-layer architecture — **Bronze**, **Silver**, and **Gold** layers.  
+It integrates data from CRM and ERP systems, performs data cleaning and transformation, and enables analytical insights through Exploratory Data Analysis (EDA) and Advanced Data Analysis (ADA).
 
-The Bronze Layer stores raw, unmodified data extracted from the source systems.
+---
 
-Sources:
+## Architecture Overview
 
-CRM System: Customer, product, and sales information
-Files: cust_info.xlsx, prd_info.xlsx, sales_details.xlsx
+### 1. Bronze Layer – Raw Data
+The Bronze layer stores raw data directly from the source systems. It preserves the original format for traceability and ensures no information is lost during ingestion.
 
-ERP System: Operational and product category data
-Files: CUST_AZ12.xlsx, LOC_A101.xlsx, PX_CAT_G1V2.xlsx
+**Sources:**
+- **CRM System** – Customer, product, and sales data  
+  Files: `cust_info.xlsx`, `prd_info.xlsx`, `sales_details.xlsx`
+- **ERP System** – Customer, location, and category data  
+  Files: `CUST_AZ12.xlsx`, `LOC_A101.xlsx`, `PX_CAT_G1V2.xlsx`
 
-This layer serves as the foundation for the ETL pipeline, keeping a direct copy of all original data.
+---
 
-2. Silver Layer – Cleaned and Transformed Data Layer
+### 2. Silver Layer – Cleaned and Transformed Data
+The Silver layer contains cleaned and standardized data from the Bronze layer, ready for further processing and analysis.
 
-The Silver Layer contains standardized, cleaned, and integrated data ready for analysis and modeling.
+**Key Steps:**
+- Removed duplicates and null values  
+- Standardized column names and formats  
+- Handled missing and inconsistent data  
+- Created logical relationships between CRM and ERP tables  
 
-Key Transformations:
+**Main Tables:**
+- `crm_cust_info`  
+- `crm_prd_info`  
+- `crm_sales_details`  
+- `erp_cust_az12`  
+- `erp_loc_a101`  
+- `erp_px_cat_g1v2`
 
-Removed duplicate and null records
+---
 
-Standardized column names, formats, and data types
+### 3. Gold Layer – Analytical Data
+The Gold layer includes the analytical models used for reporting and business analysis.  
+Dimension and fact tables are designed for efficient querying and visualization.
 
-Handled missing values appropriately
+**Views Created:**
+- `gold.dim_customers` – Customer demographic and location details  
+- `gold.dim_products` – Product category and pricing information  
+- `gold.fact_sales` – Central fact table containing transactional sales data  
 
-Established relationships between CRM and ERP entities
+---
 
-Tables:
+## Data Flow Summary
 
-crm_sales_details
+**Source Data → Bronze Layer → Silver Layer → Gold Layer → Analytics**
 
-crm_cust_info
+Each layer adds value:
+1. **Bronze:** Raw data ingestion  
+2. **Silver:** Data cleaning and transformation  
+3. **Gold:** Analytical modeling and insights  
 
-crm_prd_info
+---
 
-erp_cust_az12
+## SQL Implementation
 
-erp_loc_a101
+This project is implemented entirely in **T-SQL**, including schema design, table creation, data transformation, and analytical view creation.
 
-erp_px_cat_g1v2
+**Highlights:**
+- Created separate schemas (`silver`, `gold`) for modular organization  
+- Defined tables for CRM and ERP systems  
+- Built analytical views with `JOIN` and `ROW_NUMBER()` functions  
+- Verified relationships between dimensions and facts  
 
-3. Gold Layer – Analytical Data Layer
+Script file:  
+`SQL_DataWarehouse_Project.sql`
 
-The Gold Layer holds the final, analysis-ready tables used for reporting and analytics.
+---
 
-Tables:
+## Analysis Summary
 
-fact_sales
+### Exploratory Data Analysis (EDA)
+- Analyzed customer demographics (country, gender, marital status)  
+- Identified sales trends by region and product  
+- Validated data consistency across CRM and ERP systems  
 
-dim_customers
+### Advanced Data Analysis (ADA)
+- Determined top-performing products and categories  
+- Analyzed regional sales performance  
+- Segmented customers based on purchase patterns  
 
-dim_products
+---
 
-Relationships:
+## Tools and Technologies
 
-The fact_sales table is linked to dim_customers and dim_products using foreign keys, supporting analytical queries and dashboards.
+| Category | Tools |
+|-----------|-------|
+| Database | Microsoft SQL Server / Azure SQL |
+| Query Language | T-SQL |
+| Data Sources | Excel / CSV |
+| Layers | Bronze → Silver → Gold |
+| Analysis | SQL Queries and Aggregations |
 
-Exploratory Data Analysis (EDA)
+---
 
-The EDA phase included:
+## Project Folder Structure
 
-Reviewing customer demographics such as country, gender, and marital status
-
-Analyzing sales trends by product and region
-
-Checking for missing data, outliers, and inconsistencies
-
-Validating data alignment between CRM and ERP systems
-
-Advanced Data Analysis (ADA)
-
-The ADA phase focused on identifying key business insights, such as:
-
-Top-performing products and categories
-
-Sales performance by region and customer segment
-
-Customer segmentation and purchasing trends
-
-Tools and Technologies
-
-SQL: Used for data extraction, transformation, and querying
-
-Excel / CSV: Used as data sources and for preliminary analysis
-
-Project Structure
 SQL_DataWarehouse_Project/
 │
 ├── datasets/
-│   ├── source_crm/
-│   │   ├── cust_info.xlsx
-│   │   ├── prd_info.xlsx
-│   │   └── sales_details.xlsx
-│   └── source_erp/
-│       ├── CUST_AZ12.xlsx
-│       ├── LOC_A101.xlsx
-│       └── PX_CAT_G1V2.xlsx
+│ ├── source_crm/
+│ │ ├── cust_info.xlsx
+│ │ ├── prd_info.xlsx
+│ │ └── sales_details.xlsx
+│ └── source_erp/
+│ ├── CUST_AZ12.xlsx
+│ ├── LOC_A101.xlsx
+│ └── PX_CAT_G1V2.xlsx
 │
-├── bronze/
-├── silver/
-├── gold/
+├── silver/ # Cleaned and transformed data
+├── gold/ # Analytical views and reports
+├── scripts/
+│ └── SQL_DataWarehouse_Project.sql
 └── README.md
 
-Summary
 
-This project demonstrates a complete ETL and Data Warehousing workflow — from raw data ingestion to analytical insights.
-It highlights practical experience in:
+---
 
-SQL-based Data Modeling and Transformation
+## Key Learnings
 
-ETL Process Design
+- Designed a **multi-layered ETL architecture** using SQL  
+- Applied **data transformation and modeling techniques**  
+- Created **dimension and fact tables** for analytical querying  
+- Implemented SQL **window functions and joins** effectively  
+- Gained experience in **building a scalable data warehouse pipeline**
 
-Exploratory and Advanced Data Analysis
+---
+## Summary
 
-Multi-layer Data Architecture Development
+This project presents an end-to-end **ETL and Data Warehouse workflow**, demonstrating how raw data can be converted into meaningful analytical insights.  
+It highlights key skills in:
+
+- SQL Data Modeling and Transformation  
+- ETL Workflow Development  
+- Exploratory and Advanced Data Analysis  
+- Building a Structured Data Warehouse Architecture
